@@ -44,11 +44,40 @@ function turnLeft() {
 
 function heal() {
     console.log('healing');
-    socket.emit('heal', )
+    socket.emit('heal', );
 }
 
 function changeMode() {
-    console.log('changing mode')
-    socket.emit('changeMode', )
+    console.log('changing mode');
+    socket.emit('changeMode', );
 }
 
+function fixCriticalError() {
+    socket.emit('fixing CriticalError');
+    socket.emit('fixCriticalError', );
+}
+
+function restart() {
+    console.log('restarting...');
+    socket.emit('restart', )
+}
+
+socket.on('state', (state) => {})
+
+socket.on('temperature', (temperature) => {})
+
+socket.on('health', (health) => {})
+
+socket.on('dead', () => {})
+
+socket.on('criticalError', (criticalError) => {})
+
+socket.on('fixCriticalError', () => {})
+
+socket.on('action', (action) => {})
+
+socket.on('emote', (emote) => {})
+
+socket.on('expression', (expression) => {})
+
+socket.on('mode', (mode) => {})
