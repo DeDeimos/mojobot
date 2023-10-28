@@ -89,3 +89,18 @@ a, button, input, select {
 	margin-top: 20px;
 	padding: 10px;
 }
+
+.input-form {
+	position: absolute;
+	left: 10%;
+}
+
+.input-host {
+	border-radius: 10px;
+}
+
+.button {
+	border-radius: 10px;
+}
+
+

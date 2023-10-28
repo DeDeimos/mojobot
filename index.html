@@ -25,25 +25,47 @@
 
 	<body>
 		<div id="info">
+			<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+			<script src="socket.js"></script>
+			<div class="input-form">
+				<input type="text" id="host" class="input-host" placeholder="hostname">
+				<button type="button" class="button" onclick="connectToStation()">
+					Connect to station
+				</button>
+				<button type="button" class="button" onclick="disconnectFromStation()">
+					Disconnect from station
+				</button>
+			</div>
 
+			<div class="controllers">
+				<button>
+					<img src="icons/up-arrow.png" width="35px">
+				</button>
+				<button>
+					<img src="icons/down-arrow.png" width="35px">
+				</button>
+				<button>
+					<img src="icons/left-arrow.png" width="35px">
+				</button>
+				<button>
+					<img src="icons/right-arrow.png" width="35px">
+				</button>
+				<button>
+					<img src="icons/left-turn.png" width="35px">
+				</button>
+				<button>
+					<img src="icons/right-turn.png" width="35px">
+				</button>
+			</div>
 
-		<!-- <script type="importmap">
+   	 	<script type="importmap">
 			{
 				"imports": {
-					"three": "../build/three.module.js",
-					"three/addons/": "./jsm/"
+				"three": "https://unpkg.com/three@<version>/build/three.module.js",
+				"three/addons/": "https://unpkg.com/three@<version>/examples/jsm/"
 				}
 			}
-		</script> -->
-
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@<version>/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@<version>/examples/jsm/"
-        }
-      }
-    </script>
+    	</script>
 
 		<script type="module">
 
@@ -161,7 +183,7 @@
 					geometries.push( pzGeometry.clone().applyMatrix4( matrix ) );
 					geometries.push( nzGeometry.clone().applyMatrix4( matrix ) );
 				});
-				
+
 				// ground
 				const geometry = BufferGeometryUtils.mergeGeometries( geometries );
 				geometry.computeBoundingSphere();
@@ -388,5 +410,6 @@
 
 		</script>
 
+		
 	</body>
 </html>
