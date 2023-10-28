@@ -145,33 +145,49 @@
 				nzGeometry.translate( 0, 0, - 50 );
 
 				const geometries = [];
+				const group = new THREE.Group(); // Создайте группу, в которой будут находиться все меши
+				const blocks = jsonData.nearLocations;
+				const textureLoader = new THREE.TextureLoader();
 
 				jsonData.nearLocations.forEach((nearLocation) => {
 					const [x, h, z] = nearLocation.coordinates;
-					console.log(x,h,z);
+					const location = nearLocation.location;
+					console.log(x, h, z);
 					matrix.makeTranslation(
 						x * 100,
-						h * 100+50,
+						h * 100 + 50,
 						z * 100
 					);
-					geometries.push( pyGeometry.clone().applyMatrix4( matrix ) );
-					geometries.push( nyGeometry.clone().applyMatrix4( matrix ) );
-					geometries.push( pxGeometry.clone().applyMatrix4( matrix ) );
-					geometries.push( nxGeometry.clone().applyMatrix4( matrix ) );
-					geometries.push( pzGeometry.clone().applyMatrix4( matrix ) );
-					geometries.push( nzGeometry.clone().applyMatrix4( matrix ) );
-				});
-				
-				// ground
-				const geometry = BufferGeometryUtils.mergeGeometries( geometries );
-				geometry.computeBoundingSphere();
 
-				const texture = new THREE.TextureLoader().load( 'textures/minecraft/atlas.png' );
-				texture.colorSpace = THREE.SRGBColorSpace;
-				texture.magFilter = THREE.NearestFilter;
-				const material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
-				const mesh = new THREE.Mesh(geometry, material);
-				scene.add( mesh );
+					let material;
+					if (location === 'почва') {
+						material = new THREE.MeshLambertMaterial({ map: textureLoader.load('textures/minecraft/atlas.png'), side: THREE.DoubleSide });
+					} else if (location === 'кислотная поверхность') {
+						material = new THREE.MeshLambertMaterial({ map: textureLoader.load('textures/minecraft/poison.png'), side: THREE.DoubleSide });
+					} else if (location === 'песок') {
+						material = new THREE.MeshLambertMaterial({ map: textureLoader.load('textures/minecraft/mud.png'), side: THREE.DoubleSide });
+					}
+					// Добавьте другие условия для других значений location, если необходимо.
+
+					const blockGeometry = BufferGeometryUtils.mergeGeometries([
+						pyGeometry.clone().applyMatrix4(matrix),
+						nyGeometry.clone().applyMatrix4(matrix),
+						pxGeometry.clone().applyMatrix4(matrix),
+						nxGeometry.clone().applyMatrix4(matrix),
+						pzGeometry.clone().applyMatrix4(matrix),
+						nzGeometry.clone().applyMatrix4(matrix),
+					]);
+
+					const blockMesh = new THREE.Mesh(blockGeometry, material);
+					scene.add(blockMesh);
+				});
+
+				// const texture = new THREE.TextureLoader().load( 'textures/minecraft/atlas.png' );
+				// texture.colorSpace = THREE.SRGBColorSpace;
+				// texture.magFilter = THREE.NearestFilter;
+				// const material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
+				// const mesh = new THREE.Mesh(geometry, material);
+				// scene.add( mesh );
 
 				const grid = new THREE.GridHelper( 200, 40, 0xF03C00, 0xF03C00 );
 				grid.material.opacity = 0.2;
