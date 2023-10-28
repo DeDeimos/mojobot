@@ -169,7 +169,6 @@
 				const geometries = [];
 				const group = new THREE.Group(); // Создайте группу, в которой будут находиться все меши
 				const blocks = jsonData.nearLocations;
-				const textureLoader = new THREE.TextureLoader();
 
 				jsonData.nearLocations.forEach((nearLocation) => {
 					const [x, h, z] = nearLocation.coordinates;
@@ -269,6 +268,7 @@
 				for ( let i = 0; i < animations.length; i ++ ) {
 
 					const clip = animations[ i ];
+
 					const action = mixer.clipAction( clip );
 					actions[ clip.name ] = action;
 
