@@ -35,7 +35,10 @@ button {
 	user-select: none;
 	pointer-events: none;
 	z-index: 1; /* TODO Solve this in HTML */
+	bottom: 0;
 }
+
+
 
 a, button, input, select {
 	pointer-events: auto;
@@ -103,4 +106,12 @@ a, button, input, select {
 	border-radius: 10px;
 }
 
+.controllers {
+	position: absolute;
+    bottom: 0;
+}
 
+.controllers_row2 {
+	display: flex;
+    justify-content: space-between;
+}
