@@ -56,7 +56,7 @@ const data = {
         95,
         92
       ],
-      "location": "почва"
+      "location": "кислотная поверхность"
     },
     {
       "coordinates": [
@@ -64,7 +64,7 @@ const data = {
         90,
         93
       ],
-      "location": "почва"
+      "location": "песок"
     },
     {
       "coordinates": [
@@ -504,7 +504,7 @@ const data = {
         95,
         92
       ],
-      "location": "почва"
+      "location": "песок"
     },
     {
       "coordinates": [
