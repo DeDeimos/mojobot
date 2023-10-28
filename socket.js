@@ -42,3 +42,13 @@ function turnLeft() {
     socket.emit('turnLeft', );
 }
 
+function heal() {
+    console.log('healing');
+    socket.emit('heal', )
+}
+
+function changeMode() {
+    console.log('changing mode')
+    socket.emit('changeMode', )
+}
+
