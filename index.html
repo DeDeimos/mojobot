@@ -182,14 +182,23 @@
 					);
 
 					let material;
+					let texture;
 					if (location === 'почва') {
-						material = new THREE.MeshLambertMaterial({ map: textureLoader.load('textures/minecraft/atlas.png'), side: THREE.DoubleSide });
+						texture = new THREE.TextureLoader().load( 'textures/minecraft/atlas.png' );
+						texture.colorSpace = THREE.SRGBColorSpace;
+						texture.magFilter = THREE.NearestFilter;
+						material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
 					} else if (location === 'кислотная поверхность') {
-						material = new THREE.MeshLambertMaterial({ map: textureLoader.load('textures/minecraft/poison.png'), side: THREE.DoubleSide });
+						texture = new THREE.TextureLoader().load( 'textures/minecraft/poison.png' );
+						texture.colorSpace = THREE.SRGBColorSpace;
+						texture.magFilter = THREE.NearestFilter;
+						material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
 					} else if (location === 'песок') {
-						material = new THREE.MeshLambertMaterial({ map: textureLoader.load('textures/minecraft/mud.png'), side: THREE.DoubleSide });
+						texture = new THREE.TextureLoader().load( 'textures/minecraft/mud.png' );
+						texture.colorSpace = THREE.SRGBColorSpace;
+						texture.magFilter = THREE.NearestFilter;
+						material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
 					}
-					// Добавьте другие условия для других значений location, если необходимо.
 
 					const blockGeometry = BufferGeometryUtils.mergeGeometries([
 						pyGeometry.clone().applyMatrix4(matrix),
@@ -199,17 +208,9 @@
 						pzGeometry.clone().applyMatrix4(matrix),
 						nzGeometry.clone().applyMatrix4(matrix),
 					]);
-
 					const blockMesh = new THREE.Mesh(blockGeometry, material);
 					scene.add(blockMesh);
 				});
-
-				// const texture = new THREE.TextureLoader().load( 'textures/minecraft/atlas.png' );
-				// texture.colorSpace = THREE.SRGBColorSpace;
-				// texture.magFilter = THREE.NearestFilter;
-				// const material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
-				// const mesh = new THREE.Mesh(geometry, material);
-				// scene.add( mesh );
 
 				const grid = new THREE.GridHelper( 200, 40, 0xF03C00, 0xF03C00 );
 				grid.material.opacity = 0.2;
