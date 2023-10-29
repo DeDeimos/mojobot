@@ -14,7 +14,7 @@ const worldHalfWidth = worldWidth / 2;
 const worldHalfDepth = worldDepth / 2;
 let renderedBlocksLength = 0;
 
-const api = { state: "Walking" };
+const api = { state: "Idle" };
 let jsonData = {
   coordinates: [],
   direction: "север",
@@ -59,11 +59,6 @@ export function init() {
   // sides
   addSide();
 
-  const grid = new THREE.GridHelper(200, 40, 0xf03c00, 0xf03c00);
-  grid.material.opacity = 0.2;
-  grid.material.transparent = true;
-  grid.position.set(...jsonData.coordinates.map((x) => x * 100));
-  scene.add(grid);
 
   // model
 
@@ -197,7 +192,7 @@ export function createGUI(model, animations) {
   //   console.log(face.morphTargetInfluences)
   //   // Устанавливаем значение для выражения "Smile"
   //   face.morphTargetInfluences[smileIndex] = 1; // 1 означает полную улыбку
-  activeAction = actions["Walking"];
+  activeAction = actions["Idle"];
   activeAction.play();
 
   expressionFolder.open();

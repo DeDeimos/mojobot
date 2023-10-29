@@ -106,7 +106,6 @@ socket.on("state", (state) => {
     const newXPosition = state.coordinates[0] * 100;
     const newYPosition = state.coordinates[1] * 100;
     const newZPosition = state.coordinates[2] * 100;
-    // camera.lookAt(newXPosition, newYPosition+800, newZPosition);
     // camera.position.set(newXPosition+800, newYPosition+800, newZPosition+800);
     const initialPosition = new THREE.Vector3(model.position.x, model.position.y, model.position.z);
     const targetPosition = new THREE.Vector3(state.coordinates[0] * 100, state.coordinates[1] * 100, state.coordinates[2] * 100 );
