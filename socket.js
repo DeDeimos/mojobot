@@ -6,7 +6,8 @@ import {
   init,
   animate,
   model,
-  scene
+  scene,
+  camera
 } from "./scene.js";
 
 import * as THREE from "three";
@@ -91,7 +92,8 @@ socket.on("allInfo", (state) => {
   if (!state.coordinates) {
     return;
   }
-  console.log(state);
+  document.getElementById("health").innerHTML = "Здоровье: " + state.health;
+  console.log("allinfo", state);
   updateData(state);
   init();
   animate();
@@ -106,6 +108,8 @@ socket.on("state", (state) => {
     const newXPosition = state.coordinates[0] * 100;
     const newYPosition = state.coordinates[1] * 100;
     const newZPosition = state.coordinates[2] * 100;
+    // camera.lookAt(newXPosition, newYPosition+800, newZPosition);
+    // camera.position.set(newXPosition+800, newYPosition+800, newZPosition+800);
     const initialPosition = new THREE.Vector3(model.position.x, model.position.y, model.position.z);
     const targetPosition = new THREE.Vector3(state.coordinates[0] * 100, state.coordinates[1] * 100, state.coordinates[2] * 100 );
 
@@ -114,6 +118,7 @@ socket.on("state", (state) => {
     updateData(state);
     addSide();
   }
+  document.getElementById("health").innerHTML = "Здоровье: " + state.health;
   console.log(state);
 });
 
@@ -121,9 +126,13 @@ socket.on("connect", () => console.log("connected to ЦУП"));
 
 socket.on("message", (data) => console.log("Message received: " + data));
 
-socket.on("temperature", (temperature) => {});
+socket.on("temperature", (temperature) => {
+  document.getElementById("temperature").innerHTML = "Температура: " + parseFloat(temperature).toFixed(3);
+});
 
-socket.on("health", (health) => {});
+socket.on("health", (health) => {
+  document.getElementById("health").innerHTML = "Здоровье: " + health;
+});
 
 socket.on("dead", () => {});
 

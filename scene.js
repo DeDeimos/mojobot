@@ -6,8 +6,8 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
 
 let container, stats, clock, gui, mixer, actions, activeAction, previousAction;
-let camera, renderer, face;
-export let model, scene;
+let renderer, face;
+export let model, scene, camera;
 const worldWidth = 11,
   worldDepth = 11;
 const worldHalfWidth = worldWidth / 2;

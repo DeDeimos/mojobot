@@ -126,9 +126,11 @@ a, button, input, select {
 	color: red;
 	position: absolute;
 	bottom: 83%;
-	left: 0;
+	left: 1%;
+	max-width: 200px;
+	min-width: 200px;
 }
 
 .temperature {
-	margin: -10%
+	margin-bottom: -10%;
 }
