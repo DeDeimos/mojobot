@@ -29,11 +29,11 @@ function disconnectFromStation() {
 function moveForward() {
   console.log("move Forward...");
   socket.emit("moveForward");
-  let angle = Math.round(getCurrentRobotRotationDegrees());
-  if(angle == 0)moveRobotForward(stepSize, 1000, "север");
-  if(angle == 90)moveRobotForward(stepSize, 1000, "восток");
-  if(angle == 180)moveRobotForward(stepSize, 1000, "юг");
-  if(angle == 270)moveRobotForward(stepSize, 1000, "запад");
+  // let angle = Math.round(getCurrentRobotRotationDegrees());
+  // if(angle == 0)moveRobotForward(stepSize, 1000, "север");
+  // if(angle == 90)moveRobotForward(stepSize, 1000, "восток");
+  // if(angle == 180)moveRobotForward(stepSize, 1000, "юг");
+  // if(angle == 270)moveRobotForward(stepSize, 1000, "запад");
 }
 
 function moveRight() {
@@ -106,6 +106,10 @@ socket.on("state", (state) => {
     const newXPosition = state.coordinates[0] * 100;
     const newYPosition = state.coordinates[1] * 100;
     const newZPosition = state.coordinates[2] * 100;
+    const initialPosition = new THREE.Vector3(model.position.x, model.position.y, model.position.z);
+    const targetPosition = new THREE.Vector3(state.coordinates[0] * 100, state.coordinates[1] * 100, state.coordinates[2] * 100 );
+
+    moveRobotForward(stepSize, 1000, state.direction, initialPosition, targetPosition );
     model.position.set(newXPosition, newYPosition, newZPosition);
     updateData(state);
     addSide();
@@ -196,7 +200,7 @@ function createMoveAnimation({
 
   // model
   
-  robotPosition.set(model.position.x, model.position.y, model.position.z )
+  // robotPosition.set(model.position.x, model.position.y, model.position.z )
 
 
   function updateRobotPosition() {
@@ -223,13 +227,15 @@ function createMoveAnimation({
     return degrees;
   }
 
-  function moveRobotForward(distance, duration, direction) {
+  function moveRobotForward(distance, duration, direction, initialPosition, targetPosition) {
     if (model) {
       const start = performance.now();
       const end = start + duration;
-      const initialPosition = model.position.clone();
-      const targetPosition = initialPosition.clone();
       
+      console.log("initialPosition");
+      console.log(initialPosition);
+      console.log("targetPosition");
+      console.log(targetPosition);
       if (direction == 'север') {
         targetPosition.z += distance;
       } else if (direction == 'восток') {
