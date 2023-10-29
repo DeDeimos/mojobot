@@ -121,3 +121,14 @@ a, button, input, select {
 	display: flex;
     justify-content: space-between;
 }
+
+.robot-info {
+	color: red;
+	position: absolute;
+	bottom: 83%;
+	left: 0;
+}
+
+.temperature {
+	margin: -10%
+}
