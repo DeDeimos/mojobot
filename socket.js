@@ -1,83 +1,90 @@
+import { fadeToAction, createGUI } from "./scene.js";
+
 const socket = io();
 
 function connectToStation() {
-    console.log('Connecting to station...');
-    const host = document.getElementById('host').value;
-    socket.emit('connectToStation', host);
+  console.log("Connecting to station...");
+  const host = document.getElementById("host").value;
+  socket.emit("connectToStation", host);
 }
 
 function disconnectFromStation() {
-    console.log('Disconnecting from station...');
-    socket.disconnect();
-    console.log('Disconnected!');
+  console.log("Disconnecting from station...");
+  socket.disconnect();
+  console.log("Disconnected!");
 }
 
 function moveForward() {
-    console.log('move Forward...');
-    socket.emit('moveForward', );
+  console.log("move Forward...");
+  fadeToAction("Dance", 0.2);
+  socket.emit("moveForward");
 }
 
 function moveRight() {
-    console.log('move Right...');
-    socket.emit('moveRight', );
+  console.log("move Right...");
+  socket.emit("moveRight");
 }
 
 function moveLeft() {
-    console.log('move Left...');
-    socket.emit('moveLeft', );
+  console.log("move Left...");
+  socket.emit("moveLeft");
 }
 
 function moveBack() {
-    console.log('move back...');
-    socket.emit('moveBack', );
+  console.log("move back...");
+  socket.emit("moveBack");
 }
 
 function turnRight() {
-    console.log('turn right...');
-    socket.emit('turnRight', );
+  console.log("turn right...");
+  socket.emit("turnRight");
 }
 
 function turnLeft() {
-    console.log('turn left...');
-    socket.emit('turnLeft', );
+  console.log("turn left...");
+  socket.emit("turnLeft");
 }
 
 function heal() {
-    console.log('healing');
-    socket.emit('heal', );
+  console.log("healing");
+  socket.emit("heal");
 }
 
 function changeMode() {
-    console.log('changing mode');
-    socket.emit('changeMode', );
+  console.log("changing mode");
+  socket.emit("changeMode");
 }
 
 function fixCriticalError() {
-    socket.emit('fixing CriticalError');
-    socket.emit('fixCriticalError', );
+  socket.emit("fixing CriticalError");
+  socket.emit("fixCriticalError");
 }
 
 function restart() {
-    console.log('restarting...');
-    socket.emit('restart', )
+  console.log("restarting...");
+  socket.emit("restart");
 }
 
-socket.on('state', (state) => {})
+socket.on("state", (state) => {});
 
-socket.on('temperature', (temperature) => {})
+socket.on("temperature", (temperature) => {});
 
-socket.on('health', (health) => {})
+socket.on("health", (health) => {});
 
-socket.on('dead', () => {})
+socket.on("dead", () => {});
 
-socket.on('criticalError', (criticalError) => {})
+socket.on("criticalError", (criticalError) => {});
 
-socket.on('fixCriticalError', () => {})
+socket.on("fixCriticalError", () => {});
 
-socket.on('action', (action) => {})
+socket.on("action", (action) => {});
 
-socket.on('emote', (emote) => {})
+socket.on("emote", (emote) => {});
 
-socket.on('expression', (expression) => {})
+socket.on("expression", (expression) => {});
 
-socket.on('mode', (mode) => {})
+socket.on("mode", (mode) => {});
+
+document
+  .getElementById("moveForwardButton")
+  .addEventListener("click", moveForward);
