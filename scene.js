@@ -19,6 +19,10 @@ const api = { state: "Walking" };
 init();
 animate();
 
+// export function updateData(newData) {
+//     jsonData = newData;
+// }
+
 function init() {
   container = document.createElement("div");
   document.body.appendChild(container);
@@ -99,7 +103,7 @@ function init() {
     let material;
     let texture;
     if (location === "почва") {
-      texture = new THREE.TextureLoader().load("textures/minecraft/atlas.png");
+      texture = new THREE.TextureLoader().load("http://185.204.2.233:3030/atlas.png");
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.magFilter = THREE.NearestFilter;
       material = new THREE.MeshLambertMaterial({
@@ -107,7 +111,7 @@ function init() {
         side: THREE.DoubleSide,
       });
     } else if (location === "кислотная поверхность") {
-      texture = new THREE.TextureLoader().load("textures/minecraft/poison.png");
+      texture = new THREE.TextureLoader().load("http://185.204.2.233:3030/poison.png");
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.magFilter = THREE.NearestFilter;
       material = new THREE.MeshLambertMaterial({
@@ -115,7 +119,7 @@ function init() {
         side: THREE.DoubleSide,
       });
     } else if (location === "песок") {
-      texture = new THREE.TextureLoader().load("textures/minecraft/mud.png");
+      texture = new THREE.TextureLoader().load("http://185.204.2.233:3030/mud.png");
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.magFilter = THREE.NearestFilter;
       material = new THREE.MeshLambertMaterial({
@@ -146,7 +150,7 @@ function init() {
 
   const loader = new GLTFLoader();
   loader.load(
-    "RobotExpressive.glb",
+    "http://185.204.2.233:3030/RobotExpressive.glb",
     function (gltf) {
       model = gltf.scene;
       model.scale.set(32, 32, 32);
@@ -259,7 +263,12 @@ export function createGUI(model, animations) {
       .add(face.morphTargetInfluences, i, 0, 1, 0.01)
       .name(expressions[i]);
   }
-
+//   // Находим индекс выражения "Smile" в массиве expressions
+//   const smileIndex = expressions.indexOf("Angry");
+//   console.log(smileIndex)
+//   console.log(face.morphTargetInfluences)
+//   // Устанавливаем значение для выражения "Smile"
+//   face.morphTargetInfluences[smileIndex] = 1; // 1 означает полную улыбку
   activeAction = actions["Walking"];
   activeAction.play();
 

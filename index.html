@@ -42,45 +42,45 @@
 		<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 		<div class="input-form">
 			<input type="text" id="host" class="input-host" placeholder="hostname">
-			<button type="button" class="button" onclick="connectToStation()">
+			<button type="button" class="button" id="connect">
 				Connect to station
 			</button>
-			<button type="button" class="button" onclick="disconnectFromStation()">
+			<button type="button" class="button" id="disconnect">
 				Disconnect from station
 			</button>
-			<button type="button" class="button" onclick="changeMode()">
+			<button type="button" class="button" id="changeMode">
 				Change mode
 			</button>
 		</div>
 
 		<div class="controllers">
 			<div class="row-0">
-				<button onclick="heal()">
+				<button id="healButton">
 					<img src="icons/heal.png" width="35px">
 				</button>
 			</div>
 			<div class="row-1">
-				<button onclick="turnLeft()">
+				<button id="turnLeftButton">
 					<img src="icons/left-turn.png" width="35px">
 				</button>
 				<button id="moveForwardButton">
 					<img src="icons/up-arrow.png" width="35px">
 				</button>
-				<button onclick="turnRight()">
+				<button id="turnRightButton">
 					<img src="icons/right-turn.png" width="35px">
 				</button>
 
 			</div>
 			<div class="row-2">
-				<button onclick="moveLeft()">
+				<button id="moveLeftButton">
 					<img src="icons/left-arrow.png" width="35px">
 				</button>
-				<button onclick="moveRight()">
+				<button id="moveRightButton">
 					<img src="icons/right-arrow.png" width="35px">
 				</button>
 			</div>
 
-			<button onclick="moveBack()">
+			<button id="moveBackButton">
 				<img src="icons/down-arrow.png" width="35px">
 			</button>
 		</div>
