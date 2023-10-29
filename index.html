@@ -1,659 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>three.js webgl - skinning and morphing</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link type="text/css" rel="stylesheet" href="main.css">
-		<style>
-			body {
-				color: #222;
-			}
 
-			a {
-				color: #2fa1d6;
-			}
+<head>
+	<title>three.js webgl - skinning and morphing</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+	<style>
+		body {
+			color: #222;
+		}
 
-			p {
-				max-width: 600px;
-				margin-left: auto;
-				margin-right: auto;
-				padding: 0 2em;
-			}
-		</style>
-	</head>
+		a {
+			color: #2fa1d6;
+		}
 
-	<body>
-		<div id="info">
-			<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-			<script src="socket.js"></script>
-			<div class="input-form">
-				<input type="text" id="host" class="input-host" placeholder="hostname">
-				<button type="button" class="button" onclick="connectToStation()">
-					Connect to station
-				</button>
-				<button type="button" class="button" onclick="disconnectFromStation()">
-					Disconnect from station
+		p {
+			max-width: 600px;
+			margin-left: auto;
+			margin-right: auto;
+			padding: 0 2em;
+		}
+	</style>
+
+	<script type="importmap">
+		{
+			"imports": {
+			"three": "https://unpkg.com/three@0.158/build/three.module.js",
+			"three/addons/": "https://unpkg.com/three@0.158/examples/jsm/"
+			}
+		}
+	</script>
+
+	<!-- <script src="scene.js" type="module" defer></script> -->
+
+	<script src="socket.js" type="module" defer></script>
+</head>
+
+<body>
+	<div id="info">
+		<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+		<div class="input-form">
+			<input type="text" id="host" class="input-host" placeholder="hostname">
+			<button type="button" class="button" id="connect">
+				Connect to station
+			</button>
+			<button type="button" class="button" id="disconnect">
+				Disconnect from station
+			</button>
+			<button type="button" class="button" id="changeMode">
+				Change mode
+			</button>
+		</div>
+
+		<div class="controllers">
+			<div class="row-0">
+				<button id="healButton">
+					<img src="icons/heal.png" width="35px">
 				</button>
 			</div>
-
-			<div class="controllers">
-				<div class="row1">
-
-					<button id="left-turn">
-						<img src="icons/left-turn.png" width="35px">
-					</button>
-				<button id="up-arrow">
+			<div class="row-1">
+				<button id="turnLeftButton">
+					<img src="icons/left-turn.png" width="35px">
+				</button>
+				<button id="moveForwardButton">
 					<img src="icons/up-arrow.png" width="35px">
 				</button>
-				<button id="right-turn">
+				<button id="turnRightButton">
 					<img src="icons/right-turn.png" width="35px">
-				</button>
-				</div>
-				<div class="controllers_row2">
-
-				<button id="left-arrow">
-					<img src="icons/left-arrow.png" width="35px">
-				</button>
-				<button id="right-arrow">
-						<img src="icons/right-arrow.png" width="35px">
-					</button>
-				</div>
-
-				<button id="down-arrow">
-					<img src="icons/down-arrow.png" width="35px">
 				</button>
 
 			</div>
+			<div class="row-2">
+				<button id="moveLeftButton">
+					<img src="icons/left-arrow.png" width="35px">
+				</button>
+				<button id="moveRightButton">
+					<img src="icons/right-arrow.png" width="35px">
+				</button>
+			</div>
+
+			<button id="moveBackButton">
+				<img src="icons/down-arrow.png" width="35px">
+			</button>
+		</div>
+</body>
 
-   	 	<script type="importmap">
-			{
-				"imports": {
-				"three": "https://unpkg.com/three@<version>/build/three.module.js",
-				"three/addons/": "https://unpkg.com/three@<version>/examples/jsm/"
-				}
-			}
-    	</script>
-
-		<script type="module">
-
-			import * as THREE from 'three';
-
-			import Stats from 'three/addons/libs/stats.module.js';
-			import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-      		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-			import { ImprovedNoise } from 'three/addons/math/ImprovedNoise.js';
-			import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
-
-			import jsonData from './data.js';
-
-			let container, stats, clock, gui, mixer, actions, activeAction, previousAction;
-			let camera, scene, renderer, model, face;
-
-			const worldWidth = 11, worldDepth = 11;
-			const worldHalfWidth = worldWidth / 2;
-			const worldHalfDepth = worldDepth / 2;
-			const data = generateHeight( worldWidth, worldDepth );
-			let animationsObjects = [];
-			const api = { state: 'Idle' };
-
-			init();
-			animate();
-			// createMoveAnimation({
-			// 	mesh,
-			// 	startPosition: new THREE.Vector3(0, window.innerHeight, 0),
-			// 	endPosition: new THREE.Vector3(0, 0, 0) 
-			// })
-	
-
-			function init() {
-
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
-
-				let robotPosition = new THREE.Vector3();
-    			let stepSize = 100;
-				let robotRotationAngle = 0; // Исходный угол поворота робота
-
-
-				// camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 100 );
-				// camera.position.set( - 5, 3, 10 );
-				// camera.lookAt( 0, 2, 0 );
-				
-				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 10000 );
-				// camera.position.y = getY( worldHalfWidth, worldHalfDepth ) * 100 + 400;
-				const [x, y, z] = jsonData.coordinates.map(x => x * 100)
-				camera.position.set(x, y + 820, z)
-				
-
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xe0e0e0 );
-				// scene.fog = new THREE.Fog( 0xe0e0e0, 10, 1000 );
-			
-
-				clock = new THREE.Clock();
-
-				// lights
-
-				const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x8d8d8d, 3 );
-				hemiLight.position.set( 0, 20, 0 );
-				scene.add( hemiLight );
-
-				const dirLight = new THREE.DirectionalLight( 0xffffff, 3 );
-				dirLight.position.set( 0, 20, 10 );
-				scene.add( dirLight );
-
-				
-
-				// sides
-
-				const matrix = new THREE.Matrix4();
-
-				const pxGeometry = new THREE.PlaneGeometry( 100, 100 );
-				pxGeometry.attributes.uv.array[ 1 ] = 0.5;
-				pxGeometry.attributes.uv.array[ 3 ] = 0.5;
-				pxGeometry.rotateY( Math.PI / 2 );
-				pxGeometry.translate( 50, 0, 0 );
-
-				const nxGeometry = new THREE.PlaneGeometry( 100, 100 );
-				nxGeometry.attributes.uv.array[ 1 ] = 0.5;
-				nxGeometry.attributes.uv.array[ 3 ] = 0.5;
-				nxGeometry.rotateY( - Math.PI / 2 );
-				nxGeometry.translate( - 50, 0, 0 );
-
-				const pyGeometry = new THREE.PlaneGeometry( 100, 100 );
-				pyGeometry.attributes.uv.array[ 5 ] = 0.5;
-				pyGeometry.attributes.uv.array[ 7 ] = 0.5;
-				pyGeometry.rotateX( - Math.PI / 2 );
-				pyGeometry.translate( 0, 50, 0 );
-
-				const nyGeometry = new THREE.PlaneGeometry( 100, 100 );
-				nyGeometry.attributes.uv.array[ 5 ] = 0.5;
-				nyGeometry.attributes.uv.array[ 7 ] = 0.5;
-				nyGeometry.rotateX( Math.PI / 2 );
-				nyGeometry.translate( 0, - 50, 0 );
-
-				const pzGeometry = new THREE.PlaneGeometry( 100, 100 );
-				pzGeometry.attributes.uv.array[ 1 ] = 0.5;
-				pzGeometry.attributes.uv.array[ 3 ] = 0.5;
-				pzGeometry.translate( 0, 0, 50);
-
-				const nzGeometry = new THREE.PlaneGeometry( 100, 100 );
-				nzGeometry.attributes.uv.array[ 1 ] = 0.5;
-				nzGeometry.attributes.uv.array[ 3 ] = 0.5;
-				nzGeometry.rotateY( Math.PI );
-				nzGeometry.translate( 0, 0, - 50 );
-
-				const geometries = [];
-				const group = new THREE.Group(); // Создайте группу, в которой будут находиться все меши
-				const blocks = jsonData.nearLocations;
-				const textureLoader = new THREE.TextureLoader();
-
-				jsonData.nearLocations.forEach((nearLocation) => {
-					const [x, h, z] = nearLocation.coordinates;
-					const location = nearLocation.location;
-					console.log(x, h, z);
-					matrix.makeTranslation(
-						x * 100,
-						h * 100 + 50,
-						z * 100
-					);
-
-					let material;
-					let texture;
-					if (location === 'почва') {
-						texture = new THREE.TextureLoader().load( 'textures/minecraft/atlas.png' );
-						texture.colorSpace = THREE.SRGBColorSpace;
-						texture.magFilter = THREE.NearestFilter;
-						material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
-					} else if (location === 'кислотная поверхность') {
-						texture = new THREE.TextureLoader().load( 'textures/minecraft/poison.png' );
-						texture.colorSpace = THREE.SRGBColorSpace;
-						texture.magFilter = THREE.NearestFilter;
-						material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
-					} else if (location === 'песок') {
-						texture = new THREE.TextureLoader().load( 'textures/minecraft/mud.png' );
-						texture.colorSpace = THREE.SRGBColorSpace;
-						texture.magFilter = THREE.NearestFilter;
-						material = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
-					}
-
-					const blockGeometry = BufferGeometryUtils.mergeGeometries([
-						pyGeometry.clone().applyMatrix4(matrix),
-						nyGeometry.clone().applyMatrix4(matrix),
-						pxGeometry.clone().applyMatrix4(matrix),
-						nxGeometry.clone().applyMatrix4(matrix),
-						pzGeometry.clone().applyMatrix4(matrix),
-						nzGeometry.clone().applyMatrix4(matrix),
-					]);
-					const blockMesh = new THREE.Mesh(blockGeometry, material);
-					scene.add(blockMesh);
-				});
-
-				// const grid = new THREE.GridHelper( 200, 40, 0xF03C00, 0xF03C00 );
-				// grid.material.opacity = 0.2;
-				// grid.material.transparent = true;
-				// grid.position.set(...jsonData.coordinates.map(x => x * 100))
-				// scene.add( grid );
-
-				function createMoveAnimation({
-					mesh,
-					startPosition,
-					endPosition
-				}) {
-					mesh.userData.mixer = new THREE.AnimationMixer(mesh);
-					let track = new THREE.VectorKeyframeTrack(
-						'.position', [0, 1, 2], [
-						startPosition.x,
-						startPosition.y,
-						startPosition.z,
-						endPosition.x,
-						endPosition.y,
-						endPosition.z,
-						]
-					);
-					const animationClip = new THREE.AnimationClip(null, 5, [track]);
-					const animationAction = mesh.userData.mixer.clipAction(animationClip);
-					animationAction.setLoop(THREE.LoopOnce);
-					animationAction.play();
-					mesh.userData.clock = new THREE.Clock();
-					animationsObjects.push(mesh);
-				};
-
-				// model
-
-				const loader = new GLTFLoader();
-				loader.load( 'RobotExpressive.glb', function ( gltf ) {
-
-					model = gltf.scene;
-					model.scale.set(32, 32, 32)
-					model.position.set(...jsonData.coordinates.map(x => x * 100))
-					robotPosition.set(model.position.x, model.position.y, model.position.z )
-					let stepSize = 10;
-					scene.add( model );
-
-
-					createGUI( model, gltf.animations );
-
-				}, undefined, function ( e ) {
-
-					console.error( e );
-
-				} );
-
-
-				function updateRobotPosition() {
-					model.position.set(robotPosition.x, robotPosition.y, robotPosition.z);
-				}
-
-				function rotateRobot(degrees) {
-					if (model) {
-						const radians = (degrees * Math.PI) / 180; // Переводим градусы в радианы
-						model.rotateY(radians);
-						robotRotationAngle += radians; // Обновляем угол поворота
-					}
-				}
-
-				function getCurrentRobotRotationDegrees() {
-					var radians = robotRotationAngle;
-
-					// Преобразуем радианы в градусы
-					var degrees = (radians * 180) / Math.PI;
-
-					// Преобразуем отрицательные значения в положительные и ограничиваем в пределах 0-359 градусов
-					degrees = (degrees % 360 + 360) % 360;
-
-					return degrees;
-				}
-
-				function moveRobotForward(distance, duration, direction) {
-					if (model) {
-						const start = performance.now();
-						const end = start + duration;
-						const initialPosition = model.position.clone();
-						const targetPosition = initialPosition.clone();
-						
-						if (direction == 'up') {
-							targetPosition.z += distance;
-						} else if (direction == 'right') {
-							targetPosition.x += distance;
-						} else if (direction == 'down') {
-							targetPosition.z -= distance;
-						} else if (direction == 'left') {
-							targetPosition.x -= distance;
-						}
-
-						function animate(currentTime) {
-						const elapsedTime = currentTime - start;
-						const progress = elapsedTime / duration;
-
-						if (progress < 1) {
-							model.position.lerpVectors(initialPosition, targetPosition, progress);
-							requestAnimationFrame(animate);
-						} else {
-							model.position.copy(targetPosition);
-						}
-						}
-						fadeToAction("Walking", 0);
-						fadeToAction("Idle", 4);
-						requestAnimationFrame(animate);
-
-						// Создайте анимацию для данной функции перемещения
-						createMoveAnimation({
-						mesh: model,
-						startPosition: initialPosition,
-						endPosition: targetPosition,
-						duration: duration
-						});
-					}
-				}
-
-				function createRotateAnimation({ mesh, startRotation, endRotation, duration }) {
-					// Создайте анимацию для разворота робота
-					if (mesh) {
-						const clock = new THREE.Clock();
-						const mixer = new THREE.AnimationMixer(mesh);
-						const rotationTrack = new THREE.NumberKeyframeTrack(
-						'.rotation[y]', // Анимация вращения вокруг оси Y
-						[0, duration],
-						[startRotation, endRotation]
-						);
-						const rotationClip = new THREE.AnimationClip('RotateAnimation', duration, [rotationTrack]);
-						const rotationAction = mixer.clipAction(rotationClip);
-						rotationAction.setLoop(THREE.LoopOnce);
-						rotationAction.play();
-						mixer.update(0); // Начальное обновление
-						mesh.userData.mixer = mixer;
-					}
-				}
-
-
-				function rotateRobotSmoothly(degrees, duration) {
-					return new Promise((resolve) => {
-						if (model) {
-						const start = performance.now();
-						const end = start + duration;
-						const initialRotation = robotRotationAngle;
-						const targetRotation = robotRotationAngle + (degrees * Math.PI / 180);
-
-						function animate(currentTime) {
-							const elapsedTime = currentTime - start;
-							const progress = elapsedTime / duration;
-
-							if (progress < 1) {
-							const currentRotation = initialRotation + (progress * (targetRotation - initialRotation));
-							fadeToAction("Walking", 0);
-							model.rotateY(currentRotation - robotRotationAngle);
-							robotRotationAngle = currentRotation;
-							
-							fadeToAction("Idle", 4);
-							requestAnimationFrame(animate);
-							} else {
-							model.rotateY(targetRotation - robotRotationAngle);
-							robotRotationAngle = targetRotation;
-							resolve(); // Разрешить обещание после завершения анимации
-							}
-						}
-
-						requestAnimationFrame(animate);
-
-						// Создайте анимацию для данной функции разворота
-						createRotateAnimation({
-							mesh: model,
-							startRotation: initialRotation,
-							endRotation: targetRotation,
-							duration: duration
-						});
-						}
-					});
-					}
-
-					function moveRobotForwardAndRotate(degrees, distance, duration) {
-						rotateRobotSmoothly(degrees, duration).then(() => {
-							let angle = Math.round(getCurrentRobotRotationDegrees());
-							alert(angle);
-							if (angle === 0) moveRobotForward(distance, duration, "up");
-							else if (angle === 90) moveRobotForward(distance, duration, "right");
-							else if (angle === 180) moveRobotForward(distance, duration, "down");
-							else if (angle === 270) moveRobotForward(distance, duration, "left");
-						}).catch(error => alert(error))
-					}
-
-
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );
-
-				const controls = new OrbitControls( camera, renderer.domElement );
-				controls.enablePan = false;
-				controls.enableZoom = true;
-				controls.target.set(...jsonData.coordinates.map(x => x * 100));
-				controls.update();
-
-
-    // ... Ваш существующий код ...
-
-				// Определение обработчиков событий для кнопок
-				document.querySelector('#left-turn').addEventListener('click', () => {
-					// robotPosition.x -= stepSize;
-					console.log("go forward");
-					rotateRobotSmoothly(90, 1000);
-				});
-
-				document.querySelector('#up-arrow').addEventListener('click', () => {
-					let angle = Math.round(getCurrentRobotRotationDegrees());
-					alert(angle);
-					if(angle == 0)moveRobotForward(stepSize, 1000, "up");
-					if(angle == 90)moveRobotForward(stepSize, 1000, "right");
-					if(angle == 180)moveRobotForward(stepSize, 1000, "down");
-					if(angle == 270)moveRobotForward(stepSize, 1000, "left");
-					// // robotPosition.z += stepSize; // Для движения вверх меняем координату z
-					// updateRobotPosition();
-					// moveRobotForward(stepSize, 1000, "up");
-				});
-
-				document.querySelector('#right-turn').addEventListener('click', () => {
-					// robotPosition.x += stepSize;
-					rotateRobotSmoothly(-90, 1000);
-				});
-
-				document.querySelector('#left-arrow').addEventListener('click', () => {
-						moveRobotForwardAndRotate(90, stepSize, 1000);
-				});
-
-				document.querySelector('#right-arrow').addEventListener('click', () => {
-						moveRobotForwardAndRotate(-90, stepSize, 1000);
-				});
-
-				document.querySelector('#down-arrow').addEventListener('click', () => {
-						moveRobotForwardAndRotate(180, stepSize, 1000);
-				});
-    // ... Остальной ваш код ...
-
-
-
-			window.addEventListener( 'resize', onWindowResize );
-
-				// stats
-				stats = new Stats();
-				container.appendChild( stats.dom );
-
-			}	
-
-			function createGUI( model, animations ) {
-
-				const states = [ 'Idle', 'Walking', 'Running', 'Dance', 'Death', 'Sitting', 'Standing' ];
-				const emotes = [ 'Jump', 'Yes', 'No', 'Wave', 'Punch', 'ThumbsUp' ];
-
-				gui = new GUI();
-
-				mixer = new THREE.AnimationMixer( model );
-
-				actions = {};
-
-				for ( let i = 0; i < animations.length; i ++ ) {
-
-					const clip = animations[ i ];
-					const action = mixer.clipAction( clip );
-					actions[ clip.name ] = action;
-
-					if ( emotes.indexOf( clip.name ) >= 0 || states.indexOf( clip.name ) >= 4 ) {
-
-						action.clampWhenFinished = true;
-						action.loop = THREE.LoopOnce;
-
-					}
-
-				}
-
-				// states
-
-				const statesFolder = gui.addFolder( 'States' );
-
-				const clipCtrl = statesFolder.add( api, 'state' ).options( states );
-
-				clipCtrl.onChange( function () {
-
-					fadeToAction( api.state, 0.5 );
-
-				} );
-
-				statesFolder.open();
-
-				// emotes
-
-				const emoteFolder = gui.addFolder( 'Emotes' );
-
-				function createEmoteCallback( name ) {
-
-					api[ name ] = function () {
-
-						fadeToAction( name, 0.2 );
-
-						mixer.addEventListener( 'finished', restoreState );
-
-					};
-
-					emoteFolder.add( api, name );
-
-				}
-
-				function restoreState() {
-
-					mixer.removeEventListener( 'finished', restoreState );
-
-					fadeToAction( api.state, 0.2 );
-
-				}
-
-				for ( let i = 0; i < emotes.length; i ++ ) {
-
-					createEmoteCallback( emotes[ i ] );
-
-				}
-
-				emoteFolder.open();
-
-				// expressions
-
-				face = model.getObjectByName( 'Head_4' );
-
-				const expressions = Object.keys( face.morphTargetDictionary );
-				const expressionFolder = gui.addFolder( 'Expressions' );
-
-				for ( let i = 0; i < expressions.length; i ++ ) {
-
-					expressionFolder.add( face.morphTargetInfluences, i, 0, 1, 0.01 ).name( expressions[ i ] );
-
-				}
-
-				activeAction = actions[ 'Idle' ];
-				activeAction.play();
-
-				expressionFolder.open();
-
-			}
-
-			function generateHeight( width, height ) {
-
-				const data = [], perlin = new ImprovedNoise(),
-					size = width * height, z = Math.random() * 100;
-
-				let quality = 2;
-
-				for ( let j = 0; j < 4; j ++ ) {
-
-					if ( j === 0 ) for ( let i = 0; i < size; i ++ ) data[ i ] = 0;
-
-					for ( let i = 0; i < size; i ++ ) {
-
-						const x = i % width, y = ( i / width ) | 0;
-						data[ i ] += perlin.noise( x / quality, y / quality, z ) * quality;
-
-
-					}
-
-					quality *= 4;
-
-				}
-				console.log(data);
-				return data;
-
-			}
-
-			function fadeToAction( name, duration ) {
-
-				previousAction = activeAction;
-				activeAction = actions[ name ];
-
-				if ( previousAction !== activeAction ) {
-
-					previousAction.fadeOut( duration );
-
-				}
-
-				activeAction
-					.reset()
-					.setEffectiveTimeScale( 1 )
-					.setEffectiveWeight( 1 )
-					.fadeIn( duration )
-					.play();
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function getY( x, z ) {
-
-				return ( data[ x + z * worldWidth ] * 0.15 ) | 0;
-
-			}
-
-
-			function animate() {
-
-				const dt = clock.getDelta();
-
-				if ( mixer ) mixer.update( dt );
-
-				requestAnimationFrame( animate );
-
-				renderer.render( scene, camera );
-				stats.update();
-
-			}
-
-		</script>
-
-		
-	</body>
 </html>

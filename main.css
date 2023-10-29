@@ -111,7 +111,13 @@ a, button, input, select {
     bottom: 0;
 }
 
-.controllers_row2 {
+.row-0 {
+	display: flex;
+	flex: 1;
+	margin-bottom: 2px;
+}
+
+.row-2 {
 	display: flex;
     justify-content: space-between;
 }
