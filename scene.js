@@ -4,26 +4,30 @@ import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
-import jsonData from "./data.js";
 
 let container, stats, clock, gui, mixer, actions, activeAction, previousAction;
-let camera, scene, renderer, model, face;
-
+let camera, scene, renderer,  face;
+export let model;
 const worldWidth = 11,
   worldDepth = 11;
 const worldHalfWidth = worldWidth / 2;
 const worldHalfDepth = worldDepth / 2;
 
 const api = { state: "Walking" };
+let jsonData = {
+  coordinates: [],
+  direction: "север",
+  location: "почва",
+  nearLocations: [],
+};
 
-init();
-animate();
 
-// export function updateData(newData) {
-//     jsonData = newData;
-// }
+export function updateData(newData) {
+    jsonData = newData;
+    console.log(jsonData);
+}
 
-function init() {
+export function init() {
   container = document.createElement("div");
   document.body.appendChild(container);
 
@@ -103,7 +107,9 @@ function init() {
     let material;
     let texture;
     if (location === "почва") {
-      texture = new THREE.TextureLoader().load("http://185.204.2.233:3030/atlas.png");
+      texture = new THREE.TextureLoader().load(
+        "http://185.204.2.233:3030/atlas.png"
+      );
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.magFilter = THREE.NearestFilter;
       material = new THREE.MeshLambertMaterial({
@@ -111,7 +117,9 @@ function init() {
         side: THREE.DoubleSide,
       });
     } else if (location === "кислотная поверхность") {
-      texture = new THREE.TextureLoader().load("http://185.204.2.233:3030/poison.png");
+      texture = new THREE.TextureLoader().load(
+        "http://185.204.2.233:3030/poison.png"
+      );
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.magFilter = THREE.NearestFilter;
       material = new THREE.MeshLambertMaterial({
@@ -119,7 +127,9 @@ function init() {
         side: THREE.DoubleSide,
       });
     } else if (location === "песок") {
-      texture = new THREE.TextureLoader().load("http://185.204.2.233:3030/mud.png");
+      texture = new THREE.TextureLoader().load(
+        "http://185.204.2.233:3030/mud.png"
+      );
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.magFilter = THREE.NearestFilter;
       material = new THREE.MeshLambertMaterial({
@@ -263,12 +273,12 @@ export function createGUI(model, animations) {
       .add(face.morphTargetInfluences, i, 0, 1, 0.01)
       .name(expressions[i]);
   }
-//   // Находим индекс выражения "Smile" в массиве expressions
-//   const smileIndex = expressions.indexOf("Angry");
-//   console.log(smileIndex)
-//   console.log(face.morphTargetInfluences)
-//   // Устанавливаем значение для выражения "Smile"
-//   face.morphTargetInfluences[smileIndex] = 1; // 1 означает полную улыбку
+  //   // Находим индекс выражения "Smile" в массиве expressions
+  //   const smileIndex = expressions.indexOf("Angry");
+  //   console.log(smileIndex)
+  //   console.log(face.morphTargetInfluences)
+  //   // Устанавливаем значение для выражения "Smile"
+  //   face.morphTargetInfluences[smileIndex] = 1; // 1 означает полную улыбку
   activeAction = actions["Walking"];
   activeAction.play();
 

@@ -1,4 +1,11 @@
-import { fadeToAction, createGUI } from "./scene.js";
+import {
+  fadeToAction,
+  createGUI,
+  updateData,
+  init,
+  animate,
+  model,
+} from "./scene.js";
 
 const socket = io("http://185.204.2.233:3030/");
 
@@ -64,14 +71,33 @@ function restart() {
   socket.emit("restart");
 }
 
+socket.on("allInfo", (state) => {
+  if (!state.coordinates) {
+    return;
+  }
+  console.log(state);
+  updateData(state);
+  init();
+  animate();
+});
+
 socket.on("state", (state) => {
-    console.log(state)
-    // updateData(state)
+  if (!model) {
+    updateData(state);
+    init();
+    animate();
+  } else {
+    const newXPosition = state.coordinates[0] * 100;
+    const newYPosition = state.coordinates[1] * 100;
+    const newZPosition = state.coordinates[2] * 100;
+    model.position.set(newXPosition, newYPosition, newZPosition);
+  }
+  console.log(state);
 });
 
 socket.on("connect", () => console.log("connected to ЦУП"));
 
-socket.on('message', (data) => console.log('Message received: ' + data));
+socket.on("message", (data) => console.log("Message received: " + data));
 
 socket.on("temperature", (temperature) => {});
 
