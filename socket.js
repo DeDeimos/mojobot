@@ -39,31 +39,29 @@ function moveForward() {
 function moveRight() {
   console.log("move Right...");
   socket.emit("moveRight");
-  moveRobotForwardAndRotate(-90, stepSize, 1000);
+  // moveRobotForwardAndRotate(-90, stepSize, 1000);
 }
 
 function moveLeft() {
   console.log("move Left...");
   socket.emit("moveLeft");
-  moveRobotForwardAndRotate(90, stepSize, 1000);
+  // moveRobotForwardAndRotate(90, stepSize, 1000);
 }
 
 function moveBack() {
   console.log("move back...");
   socket.emit("moveBack");
-  moveRobotForwardAndRotate(180, stepSize, 1000);
+  // moveRobotForwardAndRotate(180, stepSize, 1000);
 }
 
 function turnRight() {
   console.log("turn right...");
   socket.emit("turnRight");
-  // rotateRobotSmoothly(90, 1000);
 }
 
 function turnLeft() {
   console.log("turn left...");
   socket.emit("turnLeft");
-  rotateRobotSmoothly(-90, 1000);
 }
 
 function heal() {
@@ -108,9 +106,16 @@ socket.on("state", (state) => {
     const newZPosition = state.coordinates[2] * 100;
     const initialPosition = new THREE.Vector3(model.position.x, model.position.y, model.position.z);
     const targetPosition = new THREE.Vector3(state.coordinates[0] * 100, state.coordinates[1] * 100, state.coordinates[2] * 100 );
-
-    moveRobotForward(stepSize, 1000, state.direction, initialPosition, targetPosition );
-    model.position.set(newXPosition, newYPosition, newZPosition);
+    console.log(model.rotation._y)
+    const initialRotation = getDegrees(model.rotation._y);
+    const targetRotation = state.direction === 'север' ? 0 :
+      state.direction === 'восток' ? 90 :
+      state.direction === 'юг' ? 180 : -90; 
+    console.log(initialRotation);
+    console.log(targetRotation);
+    move(stepSize, 1000, initialRotation, targetRotation, initialPosition, targetPosition );
+    // model.position.set(newXPosition, newYPosition, newZPosition);
+    // model.position.
     updateData(state);
     addSide();
   }
@@ -155,9 +160,9 @@ document.getElementById("moveRightButton").addEventListener("click", moveRight);
 
 document.getElementById("moveLeftButton").addEventListener("click", moveLeft);
 
-document.getElementById("turnRightButton").addEventListener("click", turnLeft);
+document.getElementById("turnRightButton").addEventListener("click",turnRight);
 
-document.getElementById("turnLeftButton").addEventListener("click", turnRight);
+document.getElementById("turnLeftButton").addEventListener("click", turnLeft );
 
 document.getElementById("healButton").addEventListener("click", heal);
 
@@ -215,8 +220,8 @@ function createMoveAnimation({
     }
   }
 
-  function getCurrentRobotRotationDegrees() {
-    var radians = robotRotationAngle;
+  function getDegrees(rotation) {
+    var radians = rotation;
 
     // Преобразуем радианы в градусы
     var degrees = (radians * 180) / Math.PI;
@@ -227,7 +232,7 @@ function createMoveAnimation({
     return degrees;
   }
 
-  function moveRobotForward(distance, duration, direction, initialPosition, targetPosition) {
+  function move(distance, duration, initialRotation, targetRotation, initialPosition, targetPosition) {
     if (model) {
       const start = performance.now();
       const end = start + duration;
@@ -236,26 +241,37 @@ function createMoveAnimation({
       console.log(initialPosition);
       console.log("targetPosition");
       console.log(targetPosition);
-      if (direction == 'север') {
-        targetPosition.z += distance;
-      } else if (direction == 'восток') {
-        targetPosition.x += distance;
-      } else if (direction == 'юг') {
-        targetPosition.z -= distance;
-      } else if (direction == 'запад') {
-        targetPosition.x -= distance;
+
+      // if (direction == 'север') {
+      //   targetPosition.z += distance;
+      // } else if (direction == 'восток') {
+      //   targetPosition.x += distance;
+      // } else if (direction == 'юг') {
+      //   targetPosition.z -= distance;
+      // } else if (direction == 'запад') {
+      //   targetPosition.x -= distance;
+      // }
+
+      /** если робот сделал только поворот */
+      if (
+        initialPosition.x === targetPosition.x && 
+        initialPosition.y === targetPosition.y && 
+        initialPosition.z === targetPosition.z 
+      ) {
+        rotateRobotSmoothly(initialRotation, targetRotation, 1000);
+        return;
       }
 
       function animate(currentTime) {
-      const elapsedTime = currentTime - start;
-      const progress = elapsedTime / duration;
+        const elapsedTime = currentTime - start;
+        const progress = elapsedTime / duration;
 
-      if (progress < 1) {
-        model.position.lerpVectors(initialPosition, targetPosition, progress);
-        requestAnimationFrame(animate);
-      } else {
-        model.position.copy(targetPosition);
-      }
+        if (progress < 1) {
+          model.position.lerpVectors(initialPosition, targetPosition, progress);
+          requestAnimationFrame(animate);
+        } else {
+          model.position.copy(targetPosition);
+        }
       }
       fadeToAction("Walking", 0);
       fadeToAction("Idle", 4);
@@ -263,10 +279,10 @@ function createMoveAnimation({
 
       // Создайте анимацию для данной функции перемещения
       createMoveAnimation({
-      mesh: model,
-      startPosition: initialPosition,
-      endPosition: targetPosition,
-      duration: duration
+        mesh: model,
+        startPosition: initialPosition,
+        endPosition: targetPosition,
+        duration: duration
       });
     }
   }
@@ -290,14 +306,18 @@ function createMoveAnimation({
     }
   }
 
+  function degreesToRadians(degrees) {
+    return degrees * (Math.PI / 180);
+  }
 
-  function rotateRobotSmoothly(degrees, duration) {
+  function rotateRobotSmoothly(initialRotation, targetRotation, duration) {
     return new Promise((resolve) => {
       if (model) {
       const start = performance.now();
       const end = start + duration;
-      const initialRotation = robotRotationAngle;
-      const targetRotation = robotRotationAngle + (degrees * Math.PI / 180);
+      console.log("крутимся блять")
+      console.log(initialRotation)
+      console.log(targetRotation)
 
       function animate(currentTime) {
         const elapsedTime = currentTime - start;
@@ -306,13 +326,14 @@ function createMoveAnimation({
         if (progress < 1) {
         const currentRotation = initialRotation + (progress * (targetRotation - initialRotation));
         fadeToAction("Walking", 0);
-        model.rotateY(currentRotation - robotRotationAngle);
+        // model.rotateY(currentRotation - robotRotationAngle);
+        model.rotateY(degreesToRadians(targetRotation - initialRotation))
         robotRotationAngle = currentRotation;
         
         fadeToAction("Idle", 4);
         requestAnimationFrame(animate);
         } else {
-        model.rotateY(targetRotation - robotRotationAngle);
+        model.rotateY(degreesToRadians(targetRotation - initialRotation));
         robotRotationAngle = targetRotation;
         resolve(); // Разрешить обещание после завершения анимации
         }
@@ -334,9 +355,9 @@ function createMoveAnimation({
     function moveRobotForwardAndRotate(degrees, distance, duration) {
       rotateRobotSmoothly(degrees, duration).then(() => {
         let angle = Math.round(getCurrentRobotRotationDegrees());
-        if (angle === 0) moveRobotForward(distance, duration, "север");
-        else if (angle === 90) moveRobotForward(distance, duration, "восток");
-        else if (angle === 180) moveRobotForward(distance, duration, "юг");
-        else if (angle === 270) moveRobotForward(distance, duration, "запад");
+        if (angle === 0) move(distance, duration, "север");
+        else if (angle === 90) move(distance, duration, "восток");
+        else if (angle === 180) move(distance, duration, "юг");
+        else if (angle === 270) move(distance, duration, "запад");
       }).catch(error => alert(error))
     }
