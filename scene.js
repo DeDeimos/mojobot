@@ -12,6 +12,7 @@ const worldWidth = 11,
   worldDepth = 11;
 const worldHalfWidth = worldWidth / 2;
 const worldHalfDepth = worldDepth / 2;
+let renderedBlocksLength = 0;
 
 const api = { state: "Walking" };
 let jsonData = {
@@ -82,6 +83,7 @@ export function init() {
       } else if (jsonData.direction == "восток") {
         model.rotation.set(0, Math.PI / 2, 0); // Повернуть на 90 градусов вокруг оси Y
       }
+      console.log(model)
       scene.add(model);
       createGUI(model, gltf.animations);
     },
@@ -278,8 +280,10 @@ export function addSide() {
   const geometries = [];
   const group = new THREE.Group();
   const blocks = jsonData.nearLocations;
+  const newData = jsonData.nearLocations.slice(renderedBlocksLength);
+  renderedBlocksLength = jsonData.nearLocations.length
 
-  jsonData.nearLocations.forEach((nearLocation) => {
+  newData.forEach((nearLocation) => {
     const [x, h, z] = nearLocation.coordinates;
     const location = nearLocation.location;
     matrix.makeTranslation(x * 100, h * 100 + 50, z * 100);
