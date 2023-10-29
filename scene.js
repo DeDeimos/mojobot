@@ -6,7 +6,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
 
 let container, stats, clock, gui, mixer, actions, activeAction, previousAction;
-let camera, scene, renderer,  face;
+let camera, scene, renderer, face;
 export let model;
 const worldWidth = 11,
   worldDepth = 11;
@@ -21,10 +21,9 @@ let jsonData = {
   nearLocations: [],
 };
 
-
 export function updateData(newData) {
-    jsonData = newData;
-    console.log(jsonData);
+  jsonData = newData;
+  console.log(jsonData);
 }
 
 export function init() {
@@ -165,8 +164,16 @@ export function init() {
       model = gltf.scene;
       model.scale.set(32, 32, 32);
       model.position.set(...jsonData.coordinates.map((x) => x * 100));
+      if (jsonData.direction == "север") {
+        model.rotateY(0);
+      } else if (jsonData.direction == "юг") {
+        model.rotateY(180);
+      } else if (jsonData.direction == "восток") {
+        model.rotateY(270);
+      } else if (jsonData.direction == "запад") {
+        model.rotateY(90);
+      }
       scene.add(model);
-
       createGUI(model, gltf.animations);
     },
     undefined,
