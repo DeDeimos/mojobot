@@ -6,8 +6,8 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
 
 let container, stats, clock, gui, mixer, actions, activeAction, previousAction;
-let camera, scene, renderer, face;
-export let model;
+let camera, renderer, face;
+export let model, scene;
 const worldWidth = 11,
   worldDepth = 11;
 const worldHalfWidth = worldWidth / 2;
@@ -56,98 +56,7 @@ export function init() {
   scene.add(dirLight);
 
   // sides
-
-  const matrix = new THREE.Matrix4();
-
-  const pxGeometry = new THREE.PlaneGeometry(100, 100);
-  pxGeometry.attributes.uv.array[1] = 0.5;
-  pxGeometry.attributes.uv.array[3] = 0.5;
-  pxGeometry.rotateY(Math.PI / 2);
-  pxGeometry.translate(50, 0, 0);
-
-  const nxGeometry = new THREE.PlaneGeometry(100, 100);
-  nxGeometry.attributes.uv.array[1] = 0.5;
-  nxGeometry.attributes.uv.array[3] = 0.5;
-  nxGeometry.rotateY(-Math.PI / 2);
-  nxGeometry.translate(-50, 0, 0);
-
-  const pyGeometry = new THREE.PlaneGeometry(100, 100);
-  pyGeometry.attributes.uv.array[5] = 0.5;
-  pyGeometry.attributes.uv.array[7] = 0.5;
-  pyGeometry.rotateX(-Math.PI / 2);
-  pyGeometry.translate(0, 50, 0);
-
-  const nyGeometry = new THREE.PlaneGeometry(100, 100);
-  nyGeometry.attributes.uv.array[5] = 0.5;
-  nyGeometry.attributes.uv.array[7] = 0.5;
-  nyGeometry.rotateX(Math.PI / 2);
-  nyGeometry.translate(0, -50, 0);
-
-  const pzGeometry = new THREE.PlaneGeometry(100, 100);
-  pzGeometry.attributes.uv.array[1] = 0.5;
-  pzGeometry.attributes.uv.array[3] = 0.5;
-  pzGeometry.translate(0, 0, 50);
-
-  const nzGeometry = new THREE.PlaneGeometry(100, 100);
-  nzGeometry.attributes.uv.array[1] = 0.5;
-  nzGeometry.attributes.uv.array[3] = 0.5;
-  nzGeometry.rotateY(Math.PI);
-  nzGeometry.translate(0, 0, -50);
-
-  const geometries = [];
-  const group = new THREE.Group();
-  const blocks = jsonData.nearLocations;
-
-  jsonData.nearLocations.forEach((nearLocation) => {
-    const [x, h, z] = nearLocation.coordinates;
-    const location = nearLocation.location;
-    matrix.makeTranslation(x * 100, h * 100 + 50, z * 100);
-
-    let material;
-    let texture;
-    if (location === "почва") {
-      texture = new THREE.TextureLoader().load(
-        "http://185.204.2.233:3030/atlas.png"
-      );
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.magFilter = THREE.NearestFilter;
-      material = new THREE.MeshLambertMaterial({
-        map: texture,
-        side: THREE.DoubleSide,
-      });
-    } else if (location === "кислотная поверхность") {
-      texture = new THREE.TextureLoader().load(
-        "http://185.204.2.233:3030/poison.png"
-      );
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.magFilter = THREE.NearestFilter;
-      material = new THREE.MeshLambertMaterial({
-        map: texture,
-        side: THREE.DoubleSide,
-      });
-    } else if (location === "песок") {
-      texture = new THREE.TextureLoader().load(
-        "http://185.204.2.233:3030/mud.png"
-      );
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.magFilter = THREE.NearestFilter;
-      material = new THREE.MeshLambertMaterial({
-        map: texture,
-        side: THREE.DoubleSide,
-      });
-    }
-
-    const blockGeometry = BufferGeometryUtils.mergeGeometries([
-      pyGeometry.clone().applyMatrix4(matrix),
-      nyGeometry.clone().applyMatrix4(matrix),
-      pxGeometry.clone().applyMatrix4(matrix),
-      nxGeometry.clone().applyMatrix4(matrix),
-      pzGeometry.clone().applyMatrix4(matrix),
-      nzGeometry.clone().applyMatrix4(matrix),
-    ]);
-    const blockMesh = new THREE.Mesh(blockGeometry, material);
-    scene.add(blockMesh);
-  });
+  addSide();
 
   const grid = new THREE.GridHelper(200, 40, 0xf03c00, 0xf03c00);
   grid.material.opacity = 0.2;
@@ -165,13 +74,13 @@ export function init() {
       model.scale.set(32, 32, 32);
       model.position.set(...jsonData.coordinates.map((x) => x * 100));
       if (jsonData.direction == "север") {
-        model.rotateY(0);
+        model.rotation.set(0, 0, 0); // Не нужно поворачивать, так как это стандартная ориентация
       } else if (jsonData.direction == "юг") {
-        model.rotateY(180);
-      } else if (jsonData.direction == "восток") {
-        model.rotateY(270);
+        model.rotation.set(0, Math.PI, 0); // Повернуть на 180 градусов вокруг оси Y
       } else if (jsonData.direction == "запад") {
-        model.rotateY(90);
+        model.rotation.set(0, -Math.PI / 2, 0); // Повернуть на -90 градусов вокруг оси Y
+      } else if (jsonData.direction == "восток") {
+        model.rotation.set(0, Math.PI / 2, 0); // Повернуть на 90 градусов вокруг оси Y
       }
       scene.add(model);
       createGUI(model, gltf.animations);
@@ -325,4 +234,100 @@ export function animate() {
   renderer.render(scene, camera);
 
   stats.update();
+}
+
+export function addSide() {
+  const blockMeshes = [];
+  const matrix = new THREE.Matrix4();
+
+  const pxGeometry = new THREE.PlaneGeometry(100, 100);
+  pxGeometry.attributes.uv.array[1] = 0.5;
+  pxGeometry.attributes.uv.array[3] = 0.5;
+  pxGeometry.rotateY(Math.PI / 2);
+  pxGeometry.translate(50, 0, 0);
+
+  const nxGeometry = new THREE.PlaneGeometry(100, 100);
+  nxGeometry.attributes.uv.array[1] = 0.5;
+  nxGeometry.attributes.uv.array[3] = 0.5;
+  nxGeometry.rotateY(-Math.PI / 2);
+  nxGeometry.translate(-50, 0, 0);
+
+  const pyGeometry = new THREE.PlaneGeometry(100, 100);
+  pyGeometry.attributes.uv.array[5] = 0.5;
+  pyGeometry.attributes.uv.array[7] = 0.5;
+  pyGeometry.rotateX(-Math.PI / 2);
+  pyGeometry.translate(0, 50, 0);
+
+  const nyGeometry = new THREE.PlaneGeometry(100, 100);
+  nyGeometry.attributes.uv.array[5] = 0.5;
+  nyGeometry.attributes.uv.array[7] = 0.5;
+  nyGeometry.rotateX(Math.PI / 2);
+  nyGeometry.translate(0, -50, 0);
+
+  const pzGeometry = new THREE.PlaneGeometry(100, 100);
+  pzGeometry.attributes.uv.array[1] = 0.5;
+  pzGeometry.attributes.uv.array[3] = 0.5;
+  pzGeometry.translate(0, 0, 50);
+
+  const nzGeometry = new THREE.PlaneGeometry(100, 100);
+  nzGeometry.attributes.uv.array[1] = 0.5;
+  nzGeometry.attributes.uv.array[3] = 0.5;
+  nzGeometry.rotateY(Math.PI);
+  nzGeometry.translate(0, 0, -50);
+
+  const geometries = [];
+  const group = new THREE.Group();
+  const blocks = jsonData.nearLocations;
+
+  jsonData.nearLocations.forEach((nearLocation) => {
+    const [x, h, z] = nearLocation.coordinates;
+    const location = nearLocation.location;
+    matrix.makeTranslation(x * 100, h * 100 + 50, z * 100);
+
+    let material;
+    let texture;
+    if (location === "почва") {
+      texture = new THREE.TextureLoader().load(
+        "http://185.204.2.233:3030/atlas.png"
+      );
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.magFilter = THREE.NearestFilter;
+      material = new THREE.MeshLambertMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+      });
+    } else if (location === "кислотная поверхность") {
+      texture = new THREE.TextureLoader().load(
+        "http://185.204.2.233:3030/poison.png"
+      );
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.magFilter = THREE.NearestFilter;
+      material = new THREE.MeshLambertMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+      });
+    } else if (location === "песок") {
+      texture = new THREE.TextureLoader().load(
+        "http://185.204.2.233:3030/mud.png"
+      );
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.magFilter = THREE.NearestFilter;
+      material = new THREE.MeshLambertMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+      });
+    }
+
+    const blockGeometry = BufferGeometryUtils.mergeGeometries([
+      pyGeometry.clone().applyMatrix4(matrix),
+      nyGeometry.clone().applyMatrix4(matrix),
+      pxGeometry.clone().applyMatrix4(matrix),
+      nxGeometry.clone().applyMatrix4(matrix),
+      pzGeometry.clone().applyMatrix4(matrix),
+      nzGeometry.clone().applyMatrix4(matrix),
+    ]);
+    const blockMesh = new THREE.Mesh(blockGeometry, material);
+    blockMeshes.push(blockMesh);
+    scene.add(blockMesh);
+  });
 }

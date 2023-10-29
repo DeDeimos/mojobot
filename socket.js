@@ -1,10 +1,12 @@
 import {
   fadeToAction,
+  addSide,
   createGUI,
   updateData,
   init,
   animate,
   model,
+  scene
 } from "./scene.js";
 
 import * as THREE from "three";
@@ -55,7 +57,7 @@ function moveBack() {
 function turnRight() {
   console.log("turn right...");
   socket.emit("turnRight");
-  rotateRobotSmoothly(90, 1000);
+  // rotateRobotSmoothly(90, 1000);
 }
 
 function turnLeft() {
@@ -109,6 +111,8 @@ socket.on("state", (state) => {
 
     moveRobotForward(stepSize, 1000, state.direction, initialPosition, targetPosition );
     model.position.set(newXPosition, newYPosition, newZPosition);
+    updateData(state);
+    addSide();
   }
   console.log(state);
 });
@@ -128,10 +132,12 @@ socket.on("criticalError", (criticalError) => {});
 socket.on("fixCriticalError", () => {});
 
 socket.on("action", (action) => {
+  console.log(action)
   fadeToAction(action, 0.2);
 });
 
 socket.on("emote", (emote) => {
+  console.log(emote)
   fadeToAction(emote, 0.2);
 });
 
