@@ -40,27 +40,27 @@
 			<div class="controllers">
 				<div class="row1">
 
-					<button>
+					<button id="left-turn">
 						<img src="icons/left-turn.png" width="35px">
 					</button>
-				<button>
+				<button id="up-arrow">
 					<img src="icons/up-arrow.png" width="35px">
 				</button>
-				<button>
+				<button id="right-turn">
 					<img src="icons/right-turn.png" width="35px">
 				</button>
 				</div>
 				<div class="controllers_row2">
 
-				<button>
+				<button id="left-arrow">
 					<img src="icons/left-arrow.png" width="35px">
 				</button>
-									<button>
+				<button id="right-arrow">
 						<img src="icons/right-arrow.png" width="35px">
 					</button>
 				</div>
 
-				<button>
+				<button id="down-arrow">
 					<img src="icons/down-arrow.png" width="35px">
 				</button>
 
@@ -95,16 +95,27 @@
 			const worldHalfWidth = worldWidth / 2;
 			const worldHalfDepth = worldDepth / 2;
 			const data = generateHeight( worldWidth, worldDepth );
-
-			const api = { state: 'Walking' };
+			let animationsObjects = [];
+			const api = { state: 'Idle' };
 
 			init();
 			animate();
+			// createMoveAnimation({
+			// 	mesh,
+			// 	startPosition: new THREE.Vector3(0, window.innerHeight, 0),
+			// 	endPosition: new THREE.Vector3(0, 0, 0) 
+			// })
+	
 
 			function init() {
 
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
+
+				let robotPosition = new THREE.Vector3();
+    			let stepSize = 100;
+				let robotRotationAngle = 0; // Исходный угол поворота робота
+
 
 				// camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 100 );
 				// camera.position.set( - 5, 3, 10 );
@@ -177,6 +188,7 @@
 				const geometries = [];
 				const group = new THREE.Group(); // Создайте группу, в которой будут находиться все меши
 				const blocks = jsonData.nearLocations;
+				const textureLoader = new THREE.TextureLoader();
 
 				jsonData.nearLocations.forEach((nearLocation) => {
 					const [x, h, z] = nearLocation.coordinates;
@@ -219,11 +231,35 @@
 					scene.add(blockMesh);
 				});
 
-				const grid = new THREE.GridHelper( 200, 40, 0xF03C00, 0xF03C00 );
-				grid.material.opacity = 0.2;
-				grid.material.transparent = true;
-				grid.position.set(...jsonData.coordinates.map(x => x * 100))
-				scene.add( grid );
+				// const grid = new THREE.GridHelper( 200, 40, 0xF03C00, 0xF03C00 );
+				// grid.material.opacity = 0.2;
+				// grid.material.transparent = true;
+				// grid.position.set(...jsonData.coordinates.map(x => x * 100))
+				// scene.add( grid );
+
+				function createMoveAnimation({
+					mesh,
+					startPosition,
+					endPosition
+				}) {
+					mesh.userData.mixer = new THREE.AnimationMixer(mesh);
+					let track = new THREE.VectorKeyframeTrack(
+						'.position', [0, 1, 2], [
+						startPosition.x,
+						startPosition.y,
+						startPosition.z,
+						endPosition.x,
+						endPosition.y,
+						endPosition.z,
+						]
+					);
+					const animationClip = new THREE.AnimationClip(null, 5, [track]);
+					const animationAction = mesh.userData.mixer.clipAction(animationClip);
+					animationAction.setLoop(THREE.LoopOnce);
+					animationAction.play();
+					mesh.userData.clock = new THREE.Clock();
+					animationsObjects.push(mesh);
+				};
 
 				// model
 
@@ -233,7 +269,10 @@
 					model = gltf.scene;
 					model.scale.set(32, 32, 32)
 					model.position.set(...jsonData.coordinates.map(x => x * 100))
+					robotPosition.set(model.position.x, model.position.y, model.position.z )
+					let stepSize = 10;
 					scene.add( model );
+
 
 					createGUI( model, gltf.animations );
 
@@ -242,6 +281,145 @@
 					console.error( e );
 
 				} );
+
+
+				function updateRobotPosition() {
+					model.position.set(robotPosition.x, robotPosition.y, robotPosition.z);
+				}
+
+				function rotateRobot(degrees) {
+					if (model) {
+						const radians = (degrees * Math.PI) / 180; // Переводим градусы в радианы
+						model.rotateY(radians);
+						robotRotationAngle += radians; // Обновляем угол поворота
+					}
+				}
+
+				function getCurrentRobotRotationDegrees() {
+					var radians = robotRotationAngle;
+
+					// Преобразуем радианы в градусы
+					var degrees = (radians * 180) / Math.PI;
+
+					// Преобразуем отрицательные значения в положительные и ограничиваем в пределах 0-359 градусов
+					degrees = (degrees % 360 + 360) % 360;
+
+					return degrees;
+				}
+
+				function moveRobotForward(distance, duration, direction) {
+					if (model) {
+						const start = performance.now();
+						const end = start + duration;
+						const initialPosition = model.position.clone();
+						const targetPosition = initialPosition.clone();
+						
+						if (direction == 'up') {
+							targetPosition.z += distance;
+						} else if (direction == 'right') {
+							targetPosition.x += distance;
+						} else if (direction == 'down') {
+							targetPosition.z -= distance;
+						} else if (direction == 'left') {
+							targetPosition.x -= distance;
+						}
+
+						function animate(currentTime) {
+						const elapsedTime = currentTime - start;
+						const progress = elapsedTime / duration;
+
+						if (progress < 1) {
+							model.position.lerpVectors(initialPosition, targetPosition, progress);
+							requestAnimationFrame(animate);
+						} else {
+							model.position.copy(targetPosition);
+						}
+						}
+						fadeToAction("Walking", 0);
+						fadeToAction("Idle", 4);
+						requestAnimationFrame(animate);
+
+						// Создайте анимацию для данной функции перемещения
+						createMoveAnimation({
+						mesh: model,
+						startPosition: initialPosition,
+						endPosition: targetPosition,
+						duration: duration
+						});
+					}
+				}
+
+				function createRotateAnimation({ mesh, startRotation, endRotation, duration }) {
+					// Создайте анимацию для разворота робота
+					if (mesh) {
+						const clock = new THREE.Clock();
+						const mixer = new THREE.AnimationMixer(mesh);
+						const rotationTrack = new THREE.NumberKeyframeTrack(
+						'.rotation[y]', // Анимация вращения вокруг оси Y
+						[0, duration],
+						[startRotation, endRotation]
+						);
+						const rotationClip = new THREE.AnimationClip('RotateAnimation', duration, [rotationTrack]);
+						const rotationAction = mixer.clipAction(rotationClip);
+						rotationAction.setLoop(THREE.LoopOnce);
+						rotationAction.play();
+						mixer.update(0); // Начальное обновление
+						mesh.userData.mixer = mixer;
+					}
+				}
+
+
+				function rotateRobotSmoothly(degrees, duration) {
+					return new Promise((resolve) => {
+						if (model) {
+						const start = performance.now();
+						const end = start + duration;
+						const initialRotation = robotRotationAngle;
+						const targetRotation = robotRotationAngle + (degrees * Math.PI / 180);
+
+						function animate(currentTime) {
+							const elapsedTime = currentTime - start;
+							const progress = elapsedTime / duration;
+
+							if (progress < 1) {
+							const currentRotation = initialRotation + (progress * (targetRotation - initialRotation));
+							fadeToAction("Walking", 0);
+							model.rotateY(currentRotation - robotRotationAngle);
+							robotRotationAngle = currentRotation;
+							
+							fadeToAction("Idle", 4);
+							requestAnimationFrame(animate);
+							} else {
+							model.rotateY(targetRotation - robotRotationAngle);
+							robotRotationAngle = targetRotation;
+							resolve(); // Разрешить обещание после завершения анимации
+							}
+						}
+
+						requestAnimationFrame(animate);
+
+						// Создайте анимацию для данной функции разворота
+						createRotateAnimation({
+							mesh: model,
+							startRotation: initialRotation,
+							endRotation: targetRotation,
+							duration: duration
+						});
+						}
+					});
+					}
+
+					function moveRobotForwardAndRotate(degrees, distance, duration) {
+						rotateRobotSmoothly(degrees, duration).then(() => {
+							let angle = Math.round(getCurrentRobotRotationDegrees());
+							alert(angle);
+							if (angle === 0) moveRobotForward(distance, duration, "up");
+							else if (angle === 90) moveRobotForward(distance, duration, "right");
+							else if (angle === 180) moveRobotForward(distance, duration, "down");
+							else if (angle === 270) moveRobotForward(distance, duration, "left");
+						}).catch(error => alert(error))
+					}
+
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -254,13 +432,55 @@
 				controls.target.set(...jsonData.coordinates.map(x => x * 100));
 				controls.update();
 
-				window.addEventListener( 'resize', onWindowResize );
+
+    // ... Ваш существующий код ...
+
+				// Определение обработчиков событий для кнопок
+				document.querySelector('#left-turn').addEventListener('click', () => {
+					// robotPosition.x -= stepSize;
+					console.log("go forward");
+					rotateRobotSmoothly(90, 1000);
+				});
+
+				document.querySelector('#up-arrow').addEventListener('click', () => {
+					let angle = Math.round(getCurrentRobotRotationDegrees());
+					alert(angle);
+					if(angle == 0)moveRobotForward(stepSize, 1000, "up");
+					if(angle == 90)moveRobotForward(stepSize, 1000, "right");
+					if(angle == 180)moveRobotForward(stepSize, 1000, "down");
+					if(angle == 270)moveRobotForward(stepSize, 1000, "left");
+					// // robotPosition.z += stepSize; // Для движения вверх меняем координату z
+					// updateRobotPosition();
+					// moveRobotForward(stepSize, 1000, "up");
+				});
+
+				document.querySelector('#right-turn').addEventListener('click', () => {
+					// robotPosition.x += stepSize;
+					rotateRobotSmoothly(-90, 1000);
+				});
+
+				document.querySelector('#left-arrow').addEventListener('click', () => {
+						moveRobotForwardAndRotate(90, stepSize, 1000);
+				});
+
+				document.querySelector('#right-arrow').addEventListener('click', () => {
+						moveRobotForwardAndRotate(-90, stepSize, 1000);
+				});
+
+				document.querySelector('#down-arrow').addEventListener('click', () => {
+						moveRobotForwardAndRotate(180, stepSize, 1000);
+				});
+    // ... Остальной ваш код ...
+
+
+
+			window.addEventListener( 'resize', onWindowResize );
 
 				// stats
 				stats = new Stats();
 				container.appendChild( stats.dom );
 
-			}
+			}	
 
 			function createGUI( model, animations ) {
 
@@ -276,7 +496,6 @@
 				for ( let i = 0; i < animations.length; i ++ ) {
 
 					const clip = animations[ i ];
-
 					const action = mixer.clipAction( clip );
 					actions[ clip.name ] = action;
 
@@ -350,7 +569,7 @@
 
 				}
 
-				activeAction = actions[ 'Walking' ];
+				activeAction = actions[ 'Idle' ];
 				activeAction.play();
 
 				expressionFolder.open();
@@ -419,6 +638,7 @@
 
 			}
 
+
 			function animate() {
 
 				const dt = clock.getDelta();
@@ -428,7 +648,6 @@
 				requestAnimationFrame( animate );
 
 				renderer.render( scene, camera );
-
 				stats.update();
 
 			}
